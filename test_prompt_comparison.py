@@ -108,7 +108,11 @@ def build_runner(model_key, model_config, args):
             os.getenv("SEED18_EP", "").strip(),
             model_config.get("ep", "")
         )
-        return Seed18Runner(api_key=api_key, ep=ep, model_id=model_config["model_id"], base_url=base_url)
+        model_id = _pick_first(
+            os.getenv("SEED18_MODEL_ID", "").strip(),
+            model_config["model_id"]
+        )
+        return Seed18Runner(api_key=api_key, ep=ep, model_id=model_id, base_url=base_url)
     if model_key == "seed2.0-pro":
         api_key = _pick_first(
             args.seed20_api_key,
@@ -122,7 +126,11 @@ def build_runner(model_key, model_config, args):
             os.getenv("SEED20_EP", "").strip(),
             model_config.get("ep", "")
         )
-        return Seed20Runner(api_key=api_key, ep=ep, model_id=model_config["model_id"], base_url=base_url)
+        model_id = _pick_first(
+            os.getenv("SEED20_MODEL_ID", "").strip(),
+            model_config["model_id"]
+        )
+        return Seed20Runner(api_key=api_key, ep=ep, model_id=model_id, base_url=base_url)
     raise RuntimeError(f"未知模型: {model_key}")
 
 
@@ -132,6 +140,7 @@ def resolve_model_display(model_key, model_config, args):
             args.seed18_ep,
             os.getenv("SEED18_EP", "").strip(),
             model_config.get("ep", ""),
+            os.getenv("SEED18_MODEL_ID", "").strip(),
             model_config["model_id"]
         )
     if model_key == "seed2.0-pro":
@@ -139,6 +148,7 @@ def resolve_model_display(model_key, model_config, args):
             args.seed20_ep,
             os.getenv("SEED20_EP", "").strip(),
             model_config.get("ep", ""),
+            os.getenv("SEED20_MODEL_ID", "").strip(),
             model_config["model_id"]
         )
     return model_config["model_id"]
