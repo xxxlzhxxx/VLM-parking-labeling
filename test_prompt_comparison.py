@@ -22,7 +22,7 @@ from runners.seed20_runner import Seed20Runner
 
 NUM_RUNS = 5  # 每个提示词每张图测试次数
 IOU_THRESHOLD = 0.5
-CALL_TIMEOUT_SECONDS = 100
+CALL_TIMEOUT_SECONDS = 200
 
 # 脚本目录
 script_dir = os.path.dirname(os.path.abspath(__file__))
