@@ -46,6 +46,7 @@ MODELS = {
 # ------------ 提示词配置 ------------
 PROMPTS = {
     "prompt优化": os.path.join(script_dir, 'prompts', 'prompt优化.md'),
+    "prompt优化_v2": os.path.join(script_dir, 'prompts', 'prompt优化_v2.md'),
     "prompt_原始": os.path.join(script_dir, 'prompts', 'prompt原始.md'),
 }
 
@@ -79,11 +80,11 @@ def _load_env_file(env_path: str) -> None:
             key, value = line.split("=", 1)
             key = key.strip()
             value = value.strip().strip('"').strip("'")
-            if key:
+            if key and key not in os.environ:
                 os.environ[key] = value
 
-_load_env_file(os.path.join(script_dir, ".env"))
 _load_env_file(os.path.join(script_dir, "env"))
+_load_env_file(os.path.join(script_dir, ".env"))
 
 
 def _pick_first(*values):

@@ -12,20 +12,34 @@ class Seed20Runner:
         self.client = Ark(base_url=base_url, api_key=api_key)
 
     def _invoke(self, prompt_text, image_url):
-        model = self.ep or self.model_id
-        return self.client.chat.completions.create(
-            model=model,
-            messages=[{
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt_text},
-                    {"type": "image_url", "image_url": {"url": image_url}, "detail": "high"}
-                ]
-            }],
-            extra_body={"thinking": {"type": "enabled", "reasoning": {"effort": "high"}}},
-            temperature=0.1,
-            top_p=0.7
-        )
+        messages = [{
+            "role": "user",
+            "content": [
+                {"type": "text", "text": prompt_text},
+                {"type": "image_url", "image_url": {"url": image_url}, "detail": "high"}
+            ]
+        }]
+        try:
+            return self.client.chat.completions.create(
+                model=self.ep or self.model_id,
+                messages=messages,
+                extra_body={"thinking": {"type": "enabled", "reasoning": {"effort": "high"}}},
+                temperature=0.1,
+                top_p=0.7
+            )
+        except Exception as e:
+            if self.ep and "AccessDenied" in str(e):
+                try:
+                    return self.client.chat.completions.create(
+                        model=self.model_id,
+                        messages=messages,
+                        extra_body={"thinking": {"type": "enabled", "reasoning": {"effort": "high"}}},
+                        temperature=0.1,
+                        top_p=0.7
+                    )
+                except Exception:
+                    raise e
+            raise
 
     def run(self, prompt_text, image_url, timeout_seconds):
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
