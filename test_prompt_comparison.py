@@ -1,6 +1,6 @@
 """
 多模型 + 多提示词对比测试脚本
-支持 Doubao Seed 1.8 和 Seed 2.0 Pro 的对比测试
+支持 Doubao Seed 1.8、Seed 2.0 Pro 和 Qwen3-VL-Plus 的对比测试
 结果文件命名: {模型}_{prompt名称}_{时间}.csv
 """
 import requests
@@ -17,6 +17,7 @@ from datetime import datetime
 from collections import defaultdict
 from runners.seed18_runner import Seed18Runner
 from runners.seed20_runner import Seed20Runner
+from runners.qwen_runner import QwenRunner
 
 # ======================== 配置区 ========================
 
@@ -40,6 +41,11 @@ MODELS = {
         "model_id": "doubao-seed-2-0-pro-preview-260115",
         "ep": "ep-20260209212650-q9ljd",
         "description": "豆包 Seed 2.0 Pro Preview",
+    },
+    "qwen3-vl": {
+        "name": "Qwen3-VL-Plus",
+        "model_id": "qwen3-vl-plus",
+        "description": "通义千问 Qwen3 VL Plus",
     },
 }
 
@@ -132,6 +138,15 @@ def build_runner(model_key, model_config, args):
             model_config["model_id"]
         )
         return Seed20Runner(api_key=api_key, ep=ep, model_id=model_id, base_url=base_url)
+    if model_key == "qwen3-vl":
+        api_key = _pick_first(
+            args.qwen_api_key,
+            os.getenv("DASHSCOPE_API_KEY", "").strip()
+        )
+        if not api_key:
+            raise RuntimeError("缺少 qwen3-vl 的 API Key (DASHSCOPE_API_KEY)")
+        model_id = model_config["model_id"]
+        return QwenRunner(api_key=api_key, model_id=model_id)
     raise RuntimeError(f"未知模型: {model_key}")
 
 
@@ -152,6 +167,8 @@ def resolve_model_display(model_key, model_config, args):
             os.getenv("SEED20_MODEL_ID", "").strip(),
             model_config["model_id"]
         )
+    if model_key == "qwen3-vl":
+        return model_config["model_id"]
     return model_config["model_id"]
 
 # ======================== 工具函数 ========================
@@ -544,6 +561,8 @@ def parse_args():
     parser.add_argument('--seed18-ep', default="")
     parser.add_argument('--seed20-api-key', default="")
     parser.add_argument('--seed20-ep', default="")
+    parser.add_argument('--qwen-api-key', default="",
+                        help="Qwen3 VL API Key (DASHSCOPE_API_KEY)")
     parser.add_argument('--max-concurrent', type=int, default=5,
                         help="最大并发数 (默认: 5)")
     parser.add_argument('--images', nargs='+', default=None,
