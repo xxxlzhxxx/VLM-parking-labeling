@@ -466,38 +466,50 @@ def process_image_instance(image_url, run_id, all_results):
         init_clients()
 
         # 调用Qwen模型
-        print(f"[{run_id+1}] 正在调用Qwen3模型...")
+        print(f"[{run_id+1}] 正在调用Qwen模型(qwen-vl-max)...")
         start_time = time.time()
-        qwen_response = qwen_client.chat.completions.create(
-            model="qwen3-vl-plus",
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {"type": "image_url", "image_url": {"url": image_url}}
-                    ]
-                }
-            ],
-            extra_body={"enable_thinking":True,
-            "vl_high_resolution_images":True
-            },
-            temperature=0.1,
-            top_p=0.7
-        )
-        end_time = time.time()
-        qwen_inference_time = end_time - start_time
-        
-        # 输出token数和耗时
-        qwen_prompt_tokens = 'N/A'
-        qwen_completion_tokens = 'N/A'
-        qwen_total_tokens = 'N/A'
-        if hasattr(qwen_response, 'usage'):
-            qwen_prompt_tokens = getattr(qwen_response.usage, 'prompt_tokens', 'N/A')
-            qwen_completion_tokens = getattr(qwen_response.usage, 'completion_tokens', 'N/A')
-            qwen_total_tokens = getattr(qwen_response.usage, 'total_tokens', 'N/A')
-        print(f"[{run_id+1}] Qwen3模型消耗token数: 输入={qwen_prompt_tokens}, 输出={qwen_completion_tokens}, 总计={qwen_total_tokens}")
-        print(f"[{run_id+1}] Qwen3模型推理耗时: {qwen_inference_time:.2f} 秒")
+        try:
+            qwen_response = qwen_client.chat.completions.create(
+                model="qwen-vl-max",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt},
+                            {"type": "image_url", "image_url": {"url": image_url}}
+                        ]
+                    }
+                ],
+                # Qwen VL Max latest may not support these extra parameters or have different ones
+                # Removing thinking/resolution params for compatibility with standard VL models unless confirmed
+                # extra_body={"enable_thinking":True, "vl_high_resolution_images":True}, 
+                temperature=0.1,
+                top_p=0.7
+            )
+            end_time = time.time()
+            qwen_inference_time = end_time - start_time
+            
+            # 输出token数和耗时
+            qwen_prompt_tokens = 'N/A'
+            qwen_completion_tokens = 'N/A'
+            qwen_total_tokens = 'N/A'
+            if hasattr(qwen_response, 'usage'):
+                qwen_prompt_tokens = getattr(qwen_response.usage, 'prompt_tokens', 'N/A')
+                qwen_completion_tokens = getattr(qwen_response.usage, 'completion_tokens', 'N/A')
+                qwen_total_tokens = getattr(qwen_response.usage, 'total_tokens', 'N/A')
+            
+            qwen_output = qwen_response.choices[0].message.content
+            
+        except Exception as e:
+            print(f"[{run_id+1}] Qwen模型调用失败: {e}")
+            qwen_inference_time = 0
+            qwen_output = ""
+            qwen_prompt_tokens = 0
+            qwen_completion_tokens = 0
+            qwen_total_tokens = 0
+
+        print(f"[{run_id+1}] Qwen模型消耗token数: 输入={qwen_prompt_tokens}, 输出={qwen_completion_tokens}, 总计={qwen_total_tokens}")
+        print(f"[{run_id+1}] Qwen模型推理耗时: {qwen_inference_time:.2f} 秒")
         
         # 调用豆包1.8模型
         print(f"[{run_id+1}] 正在调用豆包1.8模型...")
@@ -538,7 +550,6 @@ def process_image_instance(image_url, run_id, all_results):
         
         # 提取bboxes
         print(f"[{run_id+1}] 正在提取bbox信息...")
-        qwen_output = qwen_response.choices[0].message.content
         doubao_output_18 = doubao_response_18.choices[0].message.content
         
         qwen_bboxes = extract_bboxes(qwen_output)
