@@ -1,0 +1,1 @@
+﻿图片名称,运行序号,提问内容,seed20模型回答,seed20-bbox,seed20推理时间(s),seed20输入tokens,seed20输出tokens,seed20总tokens,seed20-Precision,seed20-Recall,seed20-IoU,Qwen模型回答,Qwen-bbox,Qwen推理时间(s),Qwen输入tokens,Qwen输出tokens,Qwen总tokens,Qwen-Precision,Qwen-Recall,Qwen-IoU,对比图像,处理状态,处理耗时
